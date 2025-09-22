@@ -168,5 +168,5 @@ With continuous improvement, FRIDAY can perform tasks as effectively as humans, 
 
 For any queries or feedback, reach out to:
 - **Tushar Verma:** mailto:(tusharverma9810@gmail.com)
-- **Project Repository:** [GitHub Repository Link](https://github.com/yourusername/voice-assistant-friday)
+- **Project Repository:** [GitHub Repository Link](https://github.com/Tushar2153/FRIDAY-voice-assistant)
 
