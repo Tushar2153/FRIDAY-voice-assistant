@@ -57,6 +57,53 @@ The project demonstrates key concepts in machine learning, system design, and **
 This diagram illustrates the flow of commands through the hybrid architecture:
 
 ![System Architecture Diagram](Architecture.png)
+## The entire system is designed to be smart and efficient. It works by *routing* your commands to the right place, ensuring that simple, fast commands don't use your limited AI quota.
+
+## 1.User Interaction Layer
+
+This is the starting point.
+
+User Voice Input: You speak a command (e.g., *Friday, screenshot*).
+
+Speech-to-Text (SR): The speech_recognition library listens to your voice and converts it into plain text (*friday, screenshot*).
+
+## 2.Intelligent Routing Layer
+
+This is the brain of the operation and the most important part of the design.
+
+Hybrid Router: The text query goes to your run method, which acts as a router.
+
+Priority 1: Local Match: The router first checks if the query starts with a known local command from your local_command_map (like *screenshot*, *youtube*, *open gmail*, etc.).
+
+Priority 2: No Local Match: If the command is not in the local map (like *what's the weather in London?*), the router decides it must be a job for the AI.
+
+## 3.Processing Layers (The Two Paths)
+
+Based on the router's decision, the query takes one of two completely different paths:
+
+Path A: Local Processing Layer (Fast & Free) Execute Local Function: If a local match was found (e.g., *screenshot*), the router directly calls your handle_screenshot_local() function.
+
+Local Modules & Data: This function uses local libraries (like pyautogui) and local files (like trainer.yml or data.txt) to get the job done instantly.
+
+This path uses 0 **API** calls.
+
+Path B: Cloud AI Processing Layer (Smart & Quota-Based) Send to Gemini **API**: The router sends the full text query (*Friday, what's the weather in London?*) to the Google Gemini **LLM**.
+
+Gemini Function Calling: The AI analyzes the sentence and figures out the user's intent. It determines, "This user wants to run the handle_weather function, and the city parameter is London."
+
+Execute AI-Mapped Function: The system then calls your handle_weather(city=*London*) function. This function might use its own external APIs (like OpenWeather) to get the data.
+
+This path uses 1 **API** call.
+
+## 4.Output Layer
+
+Both paths must end up at the same place to give you a response.
+
+Assistant Response (Text): Both the local function (handle_screenshot_local) and the AI-mapped function (handle_weather) return a simple text string (e.g., *Screenshot saved* or *The weather in London is...*).
+
+Text-to-Speech (**TTS**): This final text response is fed into the pyttsx3 engine (speak() function).
+
+Audio Output: The assistant speaks the response to you.
 
 ---
 
