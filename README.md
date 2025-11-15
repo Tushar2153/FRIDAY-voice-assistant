@@ -1,6 +1,6 @@
 # Friday - A Hybrid AI Voice Assistant
 
-![Friday AI Assistant **GUI**](Screenshot%**202025**-11-15%**20223252**.jpg)
+![Friday AI Assistant **GUI**](Friday.jpg)
 
 ## 🚀 Project Summary
 
@@ -56,7 +56,7 @@ The project demonstrates key concepts in machine learning, system design, and **
 
 This diagram illustrates the flow of commands through the hybrid architecture:
 
-![System Architecture Diagram](Gemini_Generated_Image_4a5fss4a5fss4a5f.jpg)
+![System Architecture Diagram](Architecture.jpg)
 
 ---
 
