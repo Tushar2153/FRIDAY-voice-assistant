@@ -1,172 +1,149 @@
-# **VOICE ASSISTANT-FRIDAY**
+# Friday - A Hybrid AI Voice Assistant
 
-FRIDAY is a desktop-specific voice assistant that allows users to perform daily tasks like searching on Google, playing music, opening favorite applications, and more, using simple voice commands. Unlike other traditional voice assistants, FRIDAY does not require users to create an account.
+![Friday AI Assistant **GUI**](Screenshot%**202025**-11-15%**20223252**.jpg)
 
-## Introduction
+## 🚀 Project Summary
 
-Creating FRIDAY was an interesting task that significantly simplified many daily activities without opening a browser, such as:
-- Searching on Google
-- Playing music
-- Opening IDEs with a single voice command
+***Friday*** is an advanced, end-to-end voice assistant application designed for desktop environments. It leverages a sophisticated **hybrid routing system** that intelligently combines local machine learning for user verification, a rules-based local command handler for speed and efficiency, and a powerful cloud-based Large Language Model (Google Gemini) for complex natural language understanding and task execution. This architecture ensures a fast, reliable, and intelligent user experience without solely relying on external APIs.
 
-## Features
+The project demonstrates key concepts in machine learning, system design, and **API** integration, making it a comprehensive showcase of modern AI application development.
 
-FRIDAY offers a wide range of functionalities:
-1. **Read PDF:** It can read PDF documents aloud.
-2. **Face Authentication:** Ensures security by authenticating users before proceeding.
-3. **Unit Conversion:** Converts units like length, weight, temperature, etc.
-4. **Google Translator:** Translates text between different languages.
-5. **Open Applications:** Opens command prompt, IDE, notepad, etc.
-6. **Play Music:** Plays music from local storage or online sources.
-7. **Wikipedia Searches:** Fetches information from Wikipedia.
-8. **Open Websites:** Opens websites like Google, YouTube in a web browser.
-9. **Weather Forecast:** Provides weather updates.
-10. **Desktop Reminders:** Sets reminders for tasks.
-11. **Basic Conversations:** Engages in simple conversations.
-12. **Tell Jokes:** Tells jokes for entertainment.
-13. **Basic Calculations:** Performs arithmetic calculations.
-14. **ToDo Mode:** Manages to-do tasks.
-15. **Network Speed Test:** Tests internet speed.
+## ✨ Key Features
 
-## Tools and Technologies
+- **Real-time Face Verification:** Secures assistant activation using a locally trained ML model.
+- **Hybrid Command Routing:** Optimizes performance and **API** usage by prioritizing local command execution.
+- **Natural Language Understanding (**NLU**):** Utilizes Google Gemini for advanced conversational capabilities and function calling.
+- **Desktop Automation:** Performs various system-level tasks (screenshots, volume control, app opening).
+- **Web Integration:** Seamlessly opens websites and performs searches on YouTube, Google, Wikipedia, and WikiHow.
+- **Personal Productivity:** Includes features for time, battery status, internet speed, calculations, unit conversions, translations, and memory recall.
+- **Informational Queries:** Provides weather updates and news headlines.
+- **Entertainment:** Plays local music and tells jokes.
 
-This project was developed using:
-- **Python 3.10.12**: The programming language used to build the assistant.
-- **Visual Studio Code**: The IDE used for development.
+## 🧠 End-to-End ML Architecture Explained
 
-### Libraries and Modules
-- `pyttsx3`: Text-to-speech conversion
-- `SpeechRecognition`: Recognizes speech
-- `Datetime`: Handles date and time functions
-- `Wikipedia`: Fetches information from Wikipedia
-- `Smtplib`: Sends emails
-- `pywhatkit`: Performs various tasks like playing YouTube videos
-- `pyjokes`: Generates jokes
-- `PyMuPDF`: Reads PDF files
-- `pyautogui`: Controls the mouse and keyboard
-- `pyQt`: Creates GUI applications
+*Friday* is not just a single model; it's an intelligent **system of interconnected components** that work together to deliver a seamless user experience. Here's a breakdown of its end-to-end machine learning pipeline:
 
-## Installation
+### 1. The Core ML Model: Real-time Face Verification
 
-To run this project, follow these steps:
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/yourusername/voice-assistant-friday.git
-    ```
-2. Navigate to the project directory:
-    ```sh
-    cd voice-assistant-friday
-    ```
-3. Install the required dependencies:
-    ```sh
-    pip install -r requirements.txt
-    ```
+- **Problem:** Ensure secure and personalized activation of the voice assistant.
+- **Data Collection:** Custom `dataset.py` script captures multiple facial images for a specific user.
+- **Model Training:** An ****LBPH** Face Recognizer** (Local Binary Patterns Histograms) is trained on the collected dataset. This model learns the unique textural patterns and features of the authorized user's face.
+- **Model Integration (Deployment):** The trained model (`trainer.yml`) is loaded by the `detect()` function at startup. It continuously processes real-time camera input to verify the user's identity before the assistant fully activates, providing a robust security layer.
 
-## Usage
+### 2. The Logic Model: Hybrid Intent Router
 
-1. **Starting FRIDAY:**
-    ```sh
-    python main.py
-    ```
-2. **Voice Commands:**
-    - Ask FRIDAY to perform tasks like "Play music", "Open Google", "What's the weather?", etc.
+- **Problem:** Mitigate **API** latency and quota limitations while ensuring fast responses for common tasks.
+- **Solution:** A custom, **rules-based intent router** is implemented within the `MainThread`'s `run` method, utilizing a `local_command_map`. This acts as the first line of defense for processing user commands.
+- **The Pipeline:**
+    1.  User speech is converted to text.
+    2.  The text query is first checked against a predefined list of local keywords and patterns (e.g., *youtube*, *screenshot*, *open code*, *remember that*).
+    3.  **If a local match is found**, the corresponding Python function (e.g., `handle_youtube_local`, `handle_screenshot`, `handle_open_app`) is executed directly. This process is instant, uses no **API** quota, and ensures high responsiveness for frequently used commands.
+    4.  **Only if no local command is matched**, the query proceeds to the next stage (the AI Brain).
 
-## Security
+### 3. The NLU Model: AI-as-a-Service (Google Gemini)
 
-FRIDAY includes a face authentication system to ensure that only authorized users can access the assistant.
+- **Problem:** Understand complex, nuanced, and unscripted natural language requests that require advanced reasoning or external data.
+- **Solution:** Integration with the **Google Gemini Pro 1.5 Large Language Model** via its **API**. Gemini acts as an intelligent Natural Language Understanding (**NLU**) service.
+- **Integration (Function Calling):**
+    1.  The user's query is sent to the Gemini **API**.
+    2.  Gemini, using its *Function Calling* capabilities, analyzes the query to determine the user's intent and extracts relevant arguments.
+    3.  It then proposes calling one of the predefined Python functions (e.g., `handle_weather`, `handle_calculate`, `handle_translate`) with the correctly parsed arguments.
+    4.  The system executes the suggested function with the AI-provided parameters. This allows for highly flexible and conversational interactions that go beyond simple keyword matching.
 
-## Advancements
+---
 
-With continuous improvement, FRIDAY can perform tasks as effectively as humans, if not more efficiently, demonstrating AI's potential in reducing human effort and saving time.
+## 📐 System Diagram
 
-## Contact
+This diagram illustrates the flow of commands through the hybrid architecture:
 
-For any queries or feedback, reach out to:
-- **Your Name:** [Your Email](mailto:youremail@example.com)
-- **Project Repository:** [GitHub Repository Link]:# **VOICE ASSISTANT-FRIDAY**
+![System Architecture Diagram](Gemini_Generated_Image_4a5fss4a5fss4a5f.jpg)
 
-FRIDAY is a desktop-specific voice assistant that allows users to perform daily tasks like searching on Google, playing music, opening favorite applications, and more, using simple voice commands. Unlike other traditional voice assistants, FRIDAY does not require users to create an account.
+---
 
-## Introduction
+## 🛠️ Technologies Used
 
-Creating FRIDAY was an interesting task that significantly simplified many daily activities without opening a browser, such as:
-- Searching on Google
-- Playing music
-- Opening IDEs with a single voice command
+- **Python 3.x**
+- **Speech Recognition:** `SpeechRecognition` library (Google Speech Recognition **API**)
+- **Text-to-Speech:** `pyttsx3` (Windows **SAPI5**)
+- **Face Recognition:** `OpenCV`, `Pillow`, `NumPy` (for **LBPH** training and detection)
+- **Large Language Model:** Google Gemini **API** (for advanced **NLU** and function calling)
+- **Web Automation:** `webbrowser`, `pywhatkit`, `wikipedia`, `wikihow`
+- **System Control:** `os`, `psutil`, `pyscreenshot`, `pyautogui`, `speedtest-cli`
+- ****GUI**:** `PyQt5` (for the animated UI)
+- **Utility:** `datetime`, `operator`, `pyjokes`
+- **Packaging:** `PyInstaller`
 
-## Features
+---
 
-FRIDAY offers a wide range of functionalities:
-1. **Read PDF:** It can read PDF documents aloud.
-2. **Face Authentication:** Ensures security by authenticating users before proceeding.
-3. **Unit Conversion:** Converts units like length, weight, temperature, etc.
-4. **Google Translator:** Translates text between different languages.
-5. **Open Applications:** Opens command prompt, IDE, notepad, etc.
-6. **Play Music:** Plays music from local storage or online sources.
-7. **Wikipedia Searches:** Fetches information from Wikipedia.
-8. **Open Websites:** Opens websites like Google, YouTube in a web browser.
-9. **Weather Forecast:** Provides weather updates.
-10. **Desktop Reminders:** Sets reminders for tasks.
-11. **Basic Conversations:** Engages in simple conversations.
-12. **Tell Jokes:** Tells jokes for entertainment.
-13. **Basic Calculations:** Performs arithmetic calculations.
-14. **ToDo Mode:** Manages to-do tasks.
-15. **Network Speed Test:** Tests internet speed.
+## ⚙️ Setup and Installation
 
-## Tools and Technologies
+### 1. Clone the repository:
 
-This project was developed using:
-- **Python 3.10.12**: The programming language used to build the assistant.
-- **Visual Studio Code**: The IDE used for development.
+'''bash git clone [https://github.com/YourGitHubUsername/Friday-AI-Assistant.git](https://github.com/YourGitHubUsername/Friday-AI-Assistant.git) cd Friday-AI-Assistant ## Create a virtual environment (recommended): Bash
 
-### Libraries and Modules
-- `pyttsx3`: Text-to-speech conversion
-- `SpeechRecognition`: Recognizes speech
-- `Datetime`: Handles date and time functions
-- `Wikipedia`: Fetches information from Wikipedia
-- `Smtplib`: Sends emails
-- `pywhatkit`: Performs various tasks like playing YouTube videos
-- `pyjokes`: Generates jokes
-- `PyMuPDF`: Reads PDF files
-- `pyautogui`: Controls the mouse and keyboard
-- `pyQt`: Creates GUI applications
+python -m venv venv .\venv\Scripts\activate  # On Windows source venv/bin/activate # On macOS/Linux ## Install dependencies: (First, create a requirements.txt file by running pip freeze > requirements.txt in your project's terminal)
 
-## Installation
+Bash
 
-To run this project, follow these steps:
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/yourusername/voice-assistant-friday.git
-    ```
-2. Navigate to the project directory:
-    ```sh
-    cd voice-assistant-friday
-    ```
-3. Install the required dependencies:
-    ```sh
-    pip install -r requirements.txt
-    ```
+pip install -r requirements.txt ## Configure API Keys and Paths: Create a config.py file in the root directory and add your **API** keys and local file paths:
 
-## Usage
+Python
 
-1. **Starting FRIDAY:**
-    ```sh
-    python main.py
-    ```
-2. **Voice Commands:**
-    - Ask FRIDAY to perform tasks like "Play music", "Open Google", "What's the weather?", etc.
+# config.py
 
-## Security
+GEMINI_API_KEY = *YOUR_GEMINI_API_KEY* WEATHER_API_KEY = *YOUR_OPENWEATHER_API_KEY* NEWS_API_KEY = *YOUR_NEWSAPI_KEY*
 
-FRIDAY includes a face authentication system to ensure that only authorized users can access the assistant.
+# Get your Gemini API key from [https://ai.google.dev/](https://ai.google.dev/)
 
-## Advancements
+# Get your OpenWeather API key from [https://openweathermap.org/](https://openweathermap.org/) # Get your NewsAPI key from [https://newsapi.org/](https://newsapi.org/)
 
-With continuous improvement, FRIDAY can perform tasks as effectively as humans, if not more efficiently, demonstrating AI's potential in reducing human effort and saving time.
+ 
+-Train the Face Recognition Model: Before running, you need to train the face recognition model with your face. (You will need to create these helper scripts, dataset.py and trainer.py)
 
-## Contact
+-Run dataset.py: This script will capture images of your face. Follow the on-screen instructions.
 
-For any queries or feedback, reach out to:
-- **Tushar Verma:** mailto:(tusharverma9810@gmail.com)
-- **Project Repository:** [GitHub Repository Link](https://github.com/Tushar2153/FRIDAY-voice-assistant)
+-Run trainer.py: This script will train the **LBPH** model and save trainer.yml.
 
+## Run the Assistant:
+
+Bash
+
+-python main.py 🚀 Deployment (Packaging for Distribution) To create a standalone executable (e.g., .exe for Windows) that can run without a Python installation:
+
+## Install PyInstaller:
+
+Bash
+
+pip install pyinstaller ## Run PyInstaller in your project's root directory: You will need to explicitly tell PyInstaller to include all non-Python files (GIFs, trainer.yml, .xml files). Adjust paths as necessary.
+
+Bash
+
+pyinstaller --onefile --windowed \
+    --add-data=*path/to/gif1.gif;.* \
+    --add-data=*path/to/gif2.gif;.* \
+    --add-data=*path/to/gif3.gif;.* \
+    --add-data=*path/to/gif4.gif;.* \
+    --add-data=*trainer/trainer.yml;trainer* \
+    --add-data=*haarcascade_frontalface_default.xml;.* \
+    --hidden-import=*pyttsx3.drivers.sapi5* \
+    --hidden-import=*google.generativeai* \
+    main.py
+The --add-data=*source;destination* flag is crucial. The example above assumes trainer.yml is in a trainer folder and the gifs are at the paths you specify.
+
+The final executable will be in the dist/ directory.'''
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+
+## 📄 License
+
+This project is licensed under the **MIT** License - see the **LICENSE** file for details.
+
+## 🙏 Acknowledgments
+
+The developers of Python and its amazing ecosystem of libraries.
+
+Google Gemini for powerful **NLU** capabilities.
+
+The open-source community for countless resources and inspiration.
