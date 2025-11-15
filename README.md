@@ -155,13 +155,13 @@ pip install -r requirements.txt ## Configure API Keys and Paths: Create a config
 
 Python
 
-# config.py
+## config.py
 
 GEMINI_API_KEY = *YOUR_GEMINI_API_KEY* WEATHER_API_KEY = *YOUR_OPENWEATHER_API_KEY* NEWS_API_KEY = *YOUR_NEWSAPI_KEY*
 
-# Get your Gemini API key from [https://ai.google.dev/](https://ai.google.dev/)
+## Get your Gemini API key from [https://ai.google.dev/](https://ai.google.dev/)
 
-# Get your OpenWeather API key from [https://openweathermap.org/](https://openweathermap.org/) # Get your NewsAPI key from [https://newsapi.org/](https://newsapi.org/)
+## Get your OpenWeather API key from [https://openweathermap.org/](https://openweathermap.org/) # Get your NewsAPI key from [https://newsapi.org/](https://newsapi.org/)
 
  
 -Train the Face Recognition Model: Before running, you need to train the face recognition model with your face. (You will need to create these helper scripts, dataset.py and trainer.py)
