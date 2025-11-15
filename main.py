@@ -1,21 +1,12 @@
-"""
-Friday: A PyQt5-based Voice Assistant
-Refactored for stability, security, and maintainability.
-Now powered by a Large Language Model (Gemini) for NLU
-and a Hybrid Router to save API quota.
-"""
-
-# --- 1. Standard Library Imports ---
 import sys
 import os
 import datetime
 import random
 import operator
 
-# --- 2. Third-Party Library Imports ---
 import cv2
-import fitz  # PyMuPDF, for reading PDFs
-import pint  # For unit conversions
+import fitz  
+import pint  
 import pyjokes
 import psutil
 import pyttsx3
@@ -30,29 +21,24 @@ from googletrans import Translator
 from pywikihow import search_wikihow
 import pyscreenshot
 
-# --- New LLM Imports ---
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
-# --- 3. PyQt5 Imports ---
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QObject, QTimer, QTime, QDate, Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QMovie
 from PyQt5.QtWidgets import QWidget, QMainWindow, QApplication
 from PyQt5.uic import loadUiType
 
-# --- 4. Local Imports ---
-import config  # Import your new configuration file
+import config  
 try:
-    # This imports your compiled UI file (e.g., from friday1.ui)
+
     from friday1 import Ui_MainWindow
 except ImportError:
     print("Error: Could not import 'friday1.py'.")
     print("Please make sure you have compiled your .ui file to a .py file named 'friday1.py'.")
     sys.exit(1)
 
-
-# --- Global Engine Setup ---
 try:
     engine = pyttsx3.init('sapi5')
     voices = engine.getProperty('voices')
@@ -94,8 +80,8 @@ def get_weather(city):
     base_url = 'http://api.openweathermap.org/data/2.5/weather'
     params = {
         'q': city,
-        'appid': config.WEATHER_API_KEY,  # Use key from config
-        'units': 'metric'  # Request in Celsius
+        'appid': config.WEATHER_API_KEY,  
+        'units': 'metric'  
     }
 
     try:
@@ -117,7 +103,7 @@ def get_news(country='in', category='general', num_articles=3):
     """Fetches top news headlines. Returns a single formatted string."""
     base_url = 'https://newsapi.org/v2/top-headlines'
     params = {
-        'apiKey': config.NEWS_API_KEY,  # Use key from config
+        'apiKey': config.NEWS_API_KEY,  
         'country': country,
         'category': category,
         'pageSize': num_articles,
@@ -131,7 +117,7 @@ def get_news(country='in', category='general', num_articles=3):
             articles = data.get('articles', [])
             if not articles:
                 return "No news articles found."
-            
+
             news_info = ["Here are the top headlines: "]
             for i, article in enumerate(articles):
                 title = article.get('title', 'No Title')
@@ -150,13 +136,13 @@ def convert_units(conversion_query):
         parts = conversion_query.split(' to ')
         if len(parts) != 2:
             return "Error: Please format your query as 'value unit to other_unit'."
-        
+
         from_part = parts[0]
         to_unit = parts[1].strip()
-        
+
         quantity = ureg(from_part)
         converted_quantity = quantity.to(to_unit)
-        
+
         return str(converted_quantity)
 
     except Exception as e:
@@ -168,13 +154,13 @@ def read_pdf(file_path):
     try:
         pdf_document = fitz.open(file_path)
         num_pages = pdf_document.page_count
-        
+
         if num_pages == 0:
             return "The PDF is empty and has no pages."
 
-        page = pdf_document[0] # Read only the first page
+        page = pdf_document[0] 
         text = page.get_text()
-        
+
         if not text:
             return f"The PDF has {num_pages} pages, but the first page has no readable text."
 
@@ -193,16 +179,16 @@ def detect():
         print(f"OpenCV Error: {e}")
         speak("Error loading face detection models. Please check config file paths.")
         return False
-        
+
     font = cv2.FONT_HERSHEY_SIMPLEX
     names = config.RECOGNIZED_NAMES
-    
+
     try:
         cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         if not cam.isOpened():
             speak("Error: Cannot open camera.")
             return False
-            
+
         cam.set(3, 640)
         cam.set(4, 480)
         minW = 0.1 * cam.get(3)
@@ -220,7 +206,7 @@ def detect():
         if not ret:
             speak("Error reading frame from camera.")
             break
-            
+
         converted_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = faceCascade.detectMultiScale(
             converted_image,
@@ -233,49 +219,45 @@ def detect():
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
             try:
                 id_index, accuracy = recognizer.predict(converted_image[y:y + h, x:x + w])
-                
+
                 if (accuracy < 60):
                     id_name = names[id_index] if id_index < len(names) else "Known"
                     accuracy_str = "  {0}%".format(round(100 - accuracy))
                     speak("verification successful")
                     verified = True
-                    flag = False  # Exit loop
+                    flag = False  
                 else:
                     id_name = "unknown"
                     accuracy_str = "  {0}%".format(round(100 - accuracy))
                     speak("cannot verify")
-                    
+
                 cv2.putText(img, str(id_name), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
                 cv2.putText(img, str(accuracy_str), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)
-            
+
             except cv2.error as e:
                 print(f"Face prediction error: {e}")
                 cv2.putText(img, "Error", (x + 5, y - 5), font, 1, (0, 0, 255), 2)
-        
+
         cv2.imshow('camera', img)
         if (cv2.waitKey(1) == ord('q')):
             break
 
     cam.release()
     cv2.destroyAllWindows()
-    
+
     if not verified:
         speak("Verification failed.")
         return False
-        
+
     return True
 
-
-# --- Main Worker Thread (Refactored for LLM) ---
-# --- Main Worker Thread (Refactored for LLM) ---
 class MainThread(QThread):
     def __init__(self):
         super(MainThread, self).__init__()
         self.running = True
 
-        # --- THIS IS THE NEW LOCAL COMMAND MAP ---
         self.local_command_map = {
-            # New Local Searches
+
             'youtube': self.handle_youtube_local,
             'google': self.handle_google_local,
             'search': self.handle_google_local,
@@ -283,7 +265,6 @@ class MainThread(QThread):
             'wikihow': self.handle_wikihow_local,
             'how to': self.handle_wikihow_local,
 
-            # Existing Local Commands
             'screenshot': self.handle_screenshot,
             'time': self.handle_time,
             'battery': self.handle_battery,
@@ -298,18 +279,14 @@ class MainThread(QThread):
             'open notepad': lambda query: self.handle_open_app('notepad'),
             'sleep': self.handle_sleep,
         }
-        # --- END OF NEW MAP ---
 
-        # --- 1. Configure the LLM ---
         try:
             genai.configure(api_key=config.GEMINI_API_KEY)
-            
-            # --- 2. Define Your Tools (Functions) ---
-            # These are for the AI to use
+
             self.tools = [
                 {
                     "function_declarations": [
-                        # --- Web & Search Tools (Still here for the AI to use if needed) ---
+
                         {
                             "name": "handle_wikipedia",
                             "description": "Get a brief summary of a topic from Wikipedia.",
@@ -330,7 +307,7 @@ class MainThread(QThread):
                             "description": "Open a specific website in the browser.",
                             "parameters": { "type": "OBJECT", "properties": { "site_name": { "type": "STRING", "description": "The name of the site (e.g., 'google', 'gmail')" } }, "required": ["site_name"] }
                         },
-                        # --- System & OS Tools ---
+
                         {
                             "name": "handle_open_app",
                             "description": "Opens a local application like VS Code or Notepad.",
@@ -366,7 +343,7 @@ class MainThread(QThread):
                             "description": "Stop the assistant and put it in sleep mode.",
                             "parameters": {}
                         },
-                        # --- Productivity Tools ---
+
                         {
                             "name": "handle_time",
                             "description": "Get the current time.",
@@ -402,7 +379,7 @@ class MainThread(QThread):
                             "description": "Read the first page of a PDF file from the local PDF directory.",
                             "parameters": { "type": "OBJECT", "properties": { "pdf_name": { "type": "STRING", "description": "The name of the PDF file (without .pdf)" } }, "required": ["pdf_name"] }
                         },
-                        # --- Information & Fun Tools ---
+
                         {
                             "name": "handle_weather",
                             "description": "Get the current weather for a specific city.",
@@ -411,7 +388,7 @@ class MainThread(QThread):
                         {
                             "name": "handle_news",
                             "description": "Get the top news headlines.",
-                            "parameters": { "type": "OBJECT", "properties": { "category": { "type": "STRING", "description": "e.g., 'general', 'business', 'technology'" }, "country": { "type": "STRING", "description": "e.g., 'in' (India), 'us' (USA)" } }, "required": [] } # No required params, will use defaults
+                            "parameters": { "type": "OBJECT", "properties": { "category": { "type": "STRING", "description": "e.g., 'general', 'business', 'technology'" }, "country": { "type": "STRING", "description": "e.g., 'in' (India), 'us' (USA)" } }, "required": [] } 
                         },
                         {
                             "name": "handle_play_music",
@@ -432,8 +409,6 @@ class MainThread(QThread):
                 }
             ]
 
-            # --- 3. Map Tool Names to Your Actual Python Functions ---
-            # This map is still needed for Gemini
             self.function_map = {
                 "handle_wikipedia": self.handle_wikipedia,
                 "handle_youtube": self.handle_youtube,
@@ -459,8 +434,7 @@ class MainThread(QThread):
                 "handle_joke": self.handle_joke,
                 "handle_wikihow": self.handle_wikihow,
             }
-            
-            # Safety settings
+
             safety_settings = {
                 HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
                 HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
@@ -468,31 +442,27 @@ class MainThread(QThread):
                 HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
             }
 
-            # System instruction to set the assistant's persona
             system_instruction = "You are Friday, a helpful and professional personal assistant. You were created by Tushar, Tanishka, and Vishakha. Your responses should be concise and helpful."
 
-            # Initialize the generative model
             self.model = genai.GenerativeModel(
-                model_name='gemini-2.5-pro', # Updated model name
+                model_name='gemini-2.5-pro', 
                 safety_settings=safety_settings,
                 tools=self.tools,
                 system_instruction=system_instruction
             )
-            
-            # Start a chat session
+
             self.chat = self.model.start_chat(enable_automatic_function_calling=True)
-            
+
         except Exception as e:
             print(f"Error initializing Gemini Model: {e}")
             speak("Error initializing my AI brain. Please check the API key and internet connection.")
             self.running = False
 
-
     def run(self):
         """The main execution loop for the assistant."""
         if not detect():
             speak("Verification failed. Shutting down.")
-            return  # Stops the thread cleanly
+            return  
 
         wishme()
 
@@ -502,44 +472,37 @@ class MainThread(QThread):
                 if query == "none":
                     continue
 
-                if not self.running:  # Check if handle_sleep was called
+                if not self.running:  
                     break
 
-                # --- THIS IS THE UPDATED HYBRID ROUTER ---
                 if "friday" in query:
-                    
-                    # 1. Clean the query
+
                     command_found = False
-                    # Remove "friday" to get the clean command
+
                     clean_query = query.replace("friday", "").strip()
 
-                    # 2. Check Local Commands FIRST
-                    # We use startswith() to be more accurate
                     for trigger, function in self.local_command_map.items():
-                        if clean_query.startswith(trigger): # <-- IMPROVED
+                        if clean_query.startswith(trigger): 
                             print(f"Handling local command: {trigger}")
-                            # Call the local function, passing the query
+
                             response_text = function(clean_query) 
                             speak(response_text)
                             command_found = True
-                            break # Stop checking local commands
-                    
-                    # 3. If NOT a local command, send to Gemini (and use a quota slot)
+                            break 
+
                     if not command_found:
                         print(f"Sending to Gemini (uses 1 quota): {query}")
-                        
-                        # Send the user's original query (with "friday") to the LLM
+
                         response = self.chat.send_message(query)
                         final_response = response.text
 
                         print(f"LLM Response: {final_response}")
                         speak(final_response)
-                
+
                 else:
-                    # Ignored (no trigger word)
+
                     print(f"Ignored query (no trigger): {query}")
                     pass
-                # --- END OF HYBRID ROUTER ---
 
             except Exception as e:
                 print(f"An error occurred in the main loop: {e}")
@@ -548,7 +511,7 @@ class MainThread(QThread):
     def takeCommand(self):
         """Listens for user voice command and returns it as text."""
         r = sr.Recognizer()
-        
+
         with sr.Microphone() as source:
             print("Listening...")
             r.adjust_for_ambient_noise(source)
@@ -575,12 +538,11 @@ class MainThread(QThread):
             print(f"Unknown error in takeCommand: {e}")    
             speak("Unable to Recognize your voice.")  
             return "none"
-    
-    # --- Helper for handle_calculate ---
+
     def _eval_binary_expr(self, op1, oper, op2):
         try:
             op1, op2 = int(op1), int(op2)
-            
+
             op_map = {
                 '+': operator.add, 'plus': operator.add,
                 '-': operator.sub, 'minus': operator.sub,
@@ -591,16 +553,13 @@ class MainThread(QThread):
         except Exception:
             return None
 
-    # --- REFACRTORED Handler Methods ---
-
-    # --- NEW LOCAL HANDLERS ---
     def handle_youtube_local(self, query: str):
         """
         Parses a local query to search YouTube.
         Query example: "youtube lofi beats"
         """
         try:
-            # Simple parsing: remove "youtube"
+
             search_query = query.replace("youtube", "").strip()
             if not search_query:
                 return "Sorry, I didn't catch what to search for on YouTube."
@@ -619,11 +578,11 @@ class MainThread(QThread):
         Query example: "google the weather"
         """
         try:
-            # Simple parsing: remove "google" or "search"
+
             search_query = query.replace("google", "").replace("search", "").strip()
             if not search_query:
                 return "Sorry, I didn't catch what to search for on Google."
-            
+
             print(f"Locally searching Google for: {search_query}")
             pywhatkit.search(search_query)
             return f"Opening Google search results for {search_query}."
@@ -639,9 +598,9 @@ class MainThread(QThread):
             search_topic = query.replace("wikipedia", "").strip()
             if not search_topic:
                 return "Sorry, I didn't catch what to search for on Wikipedia."
-            
+
             print(f"Locally searching Wikipedia for: {search_topic}")
-            # Call the original handler
+
             return self.handle_wikipedia(search_topic)
         except Exception as e:
             return f"Sorry, I couldn't search Wikipedia. {e}"
@@ -657,13 +616,11 @@ class MainThread(QThread):
                 return "Sorry, I didn't catch what you want to know how to do."
 
             print(f"Locally searching WikiHow for: {task}")
-            # Call the original handler
+
             return self.handle_wikihow(task)
         except Exception as e:
             return f"Sorry, I couldn't search WikiHow. {e}"
 
-
-    # --- AI HANDLERS (Still used by Gemini) ---
     def handle_wikipedia(self, topic: str):
         try:
             print(f"Searching Wikipedia for: {topic}")
@@ -677,7 +634,7 @@ class MainThread(QThread):
             return f"Sorry, I couldn't find that on Wikipedia. {e}"
 
     def handle_youtube(self, search_query: str):
-        # This is the AI version
+
         try:
             print(f"AI searching YouTube for: {search_query}")
             web = "https://www.youtube.com/results?search_query=" + search_query
@@ -688,7 +645,7 @@ class MainThread(QThread):
             return f"I've opened the search results for {search_query}, but couldn't auto-play. {e}"
 
     def handle_google(self, search_query: str):
-        # This is the AI version
+
         try:
             print(f"AI searching Google for: {search_query}")
             pywhatkit.search(search_query)
@@ -703,7 +660,7 @@ class MainThread(QThread):
             'google': "https://google.com",
             'instagram': "https://instagram.com",
             'facebook': "https://facebook.com",
-            'chat': "https://chat.openai.com", # chatgpt
+            'chat': "https://chat.openai.com", 
             'wikipedia': "https://wikipedia.com",
         }
         if site_name in url_map:
@@ -729,7 +686,7 @@ class MainThread(QThread):
         else:
             return f"Sorry, I can't open the app '{app_name}'."
 
-    def handle_open_camera(self, query=None): # Added query=None
+    def handle_open_camera(self, query=None): 
         try:
             cap = cv2.VideoCapture(0)
             ret, frame = cap.read()
@@ -742,7 +699,7 @@ class MainThread(QThread):
         except Exception as e:
             return f"Sorry, I couldn't open the camera. {e}"
 
-    def handle_battery(self, query=None): # Added query=None
+    def handle_battery(self, query=None): 
         try:
             battery = psutil.sensors_battery()
             percentage = battery.percent
@@ -750,7 +707,7 @@ class MainThread(QThread):
         except Exception as e:
             return f"Sorry, I can't retrieve battery information. {e}"
 
-    def handle_internet_speed(self, query=None): # Added query=None
+    def handle_internet_speed(self, query=None): 
         try:
             st = speedtest.Speedtest()
             dl_mbps = round(st.download() / 1_000_000, 2)
@@ -759,7 +716,7 @@ class MainThread(QThread):
         except Exception as e:
             return f"Sorry, I couldn't test the internet speed. {e}"
 
-    def handle_screenshot(self, query=None): # Added query=None
+    def handle_screenshot(self, query=None): 
         try:
             a = datetime.datetime.now()
             filename = f"screenshot_{a.strftime('%Y-%m-%d_%H-%M-%S')}.png"
@@ -787,11 +744,11 @@ class MainThread(QThread):
         else:
             return "Sorry, I didn't understand that volume command."
 
-    def handle_sleep(self, query=None): # Added query=None
-        self.running = False  # Gracefully stops the loop
+    def handle_sleep(self, query=None): 
+        self.running = False  
         return "Thanks for using me sir, have a good day. Bye."
 
-    def handle_time(self, query=None): # Added query=None
+    def handle_time(self, query=None): 
         strTime = datetime.datetime.now().strftime("%I:%M %p")
         return f"sir the time is {strTime}"
 
@@ -802,14 +759,14 @@ class MainThread(QThread):
                 result = self._eval_binary_expr(parts[0], parts[1], parts[2])
                 if result is not None:
                     return f"The result is {result}"
-            
+
             return "Sorry, I can only calculate simple expressions like '5 plus 2'."
 
         except Exception as e:
             return f"Sorry, I was unable to calculate that. {e}"
 
     def handle_convert(self, conversion_query: str):
-        return convert_units(conversion_query) # Already returns a string
+        return convert_units(conversion_query) 
 
     def handle_translate(self, text: str, target_language: str):
         translated_phrase = translate_text(text, target_language)
@@ -823,7 +780,7 @@ class MainThread(QThread):
         except Exception as e:
             return f"Sorry, I had trouble writing that to my memory. {e}"
 
-    def handle_recall(self, query=None): # Added query=None
+    def handle_recall(self, query=None): 
         try:
             with open('data.txt', 'r') as remember:
                 return "You said me to remember that: " + remember.read()
@@ -834,19 +791,19 @@ class MainThread(QThread):
 
     def handle_read_pdf(self, pdf_name: str):
         pdf_path = os.path.join(config.PDF_DIR, f"{pdf_name.lower()}.pdf")
-        
+
         if os.path.isfile(pdf_path):
-            return read_pdf(pdf_path) # Already returns a string
+            return read_pdf(pdf_path) 
         else:
             return "No valid PDF found with that name. Please try again."
 
     def handle_weather(self, city: str):
-        return get_weather(city) # Already returns a string
+        return get_weather(city) 
 
     def handle_news(self, category: str = 'general', country: str = 'in'):
-        return get_news(country, category) # Already returns a string
+        return get_news(country, category) 
 
-    def handle_play_music(self, query=None): # Added query=None
+    def handle_play_music(self, query=None): 
         try:
             music_dir = config.MUSIC_DIR
             songs = os.listdir(music_dir)
@@ -871,7 +828,7 @@ class MainThread(QThread):
                 return f"Sorry, I couldn't find a how-to guide for {task}."
         except Exception as e:
             return f"Sorry sir, I am not able to find this. {e}"
-# --- PyQt5 GUI Class ---
+
 startExecution = MainThread()
 
 class Main(QMainWindow):
@@ -881,8 +838,7 @@ class Main(QMainWindow):
         self.ui.setupUi(self)
         self.ui.pushButton.clicked.connect(self.startTask)
         self.ui.pushButton_2.clicked.connect(self.close)
-        
-        # Store movie objects to prevent garbage collection
+
         self.movie1 = None
         self.movie2 = None
         self.movie3 = None
@@ -893,15 +849,15 @@ class Main(QMainWindow):
             self.movie1 = QtGui.QMovie(config.GIF_1_PATH)
             self.ui.label.setMovie(self.movie1)
             self.movie1.start()
-            
+
             self.movie2 = QtGui.QMovie(config.GIF_2_PATH)
             self.ui.label_2.setMovie(self.movie2)
             self.movie2.start()
-            
+
             self.movie3 = QtGui.QMovie(config.GIF_3_PATH)
             self.ui.label_3.setMovie(self.movie3)
             self.movie3.start()
-            
+
             self.movie4 = QtGui.QMovie(config.GIF_4_PATH)
             self.ui.label_4.setMovie(self.movie4)
             self.movie4.start()
@@ -909,10 +865,10 @@ class Main(QMainWindow):
             print(f"Error loading GIFs. Make sure paths are correct in config.py: {e}")
             self.ui.label_2.setText("Error loading GIFs")
 
-        self.timer = QTimer(self) # Store timer as instance attribute
+        self.timer = QTimer(self) 
         self.timer.timeout.connect(self.showTime)
         self.timer.start(1000)
-        
+
         startExecution.start()
 
     def showTime(self):
@@ -922,16 +878,14 @@ class Main(QMainWindow):
         label_date = current_date.toString(Qt.ISODate)
         self.ui.textBrowser.setText(label_date)
         self.ui.textBrowser_2.setText(label_time)
-        
+
     def closeEvent(self, event):
         """Ensure the thread stops when closing the window."""
         speak("Shutting down sir.")
         startExecution.running = False
-        startExecution.wait()  # Wait for the thread to finish
+        startExecution.wait()  
         event.accept()
 
-
-# --- Application Entry Point ---
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     friday = Main()
