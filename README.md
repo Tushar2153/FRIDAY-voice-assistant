@@ -59,52 +59,71 @@ This diagram illustrates the flow of commands through the hybrid architecture:
 ![System Architecture Diagram](Architecture.png)
 ## The entire system is designed to be smart and efficient. It works by *routing* your commands to the right place, ensuring that simple, fast commands don't use your limited AI quota.
 
-## 1.User Interaction Layer
+## 1. The Input Layer (Listening)
 
-This is the starting point.
+This is how the assistant hears you.
 
-User Voice Input: You speak a command (e.g., *Friday, screenshot*).
+User Voice Input: You speak a command, for example, *Friday, what's the weather in Ghaziabad?*
 
-Speech-to-Text (SR): The speech_recognition library listens to your voice and converts it into plain text (*friday, screenshot*).
+Speech-to-Text (**STT**): The speech_recognition library (specifically, the takeCommand() function) captures the audio from your microphone. It sends this audio clip to Google's speech recognition service, which transcribes it.
 
-## 2.Intelligent Routing Layer
+Text Query: The service sends back a simple text string (a *query*): *friday what's the weather in ghaziabad*.
 
-This is the brain of the operation and the most important part of the design.
+## 2. The *Brain* (The Hybrid Router)
 
-Hybrid Router: The text query goes to your run method, which acts as a router.
+This is the most important part. Your run method acts as a smart *traffic cop* to decide where to send this query. Its main job is to save your **API** quota by handling easy tasks locally.
 
-Priority 1: Local Match: The router first checks if the query starts with a known local command from your local_command_map (like *screenshot*, *youtube*, *open gmail*, etc.).
+It instantly performs this check:
 
-Priority 2: No Local Match: If the command is not in the local map (like *what's the weather in London?*), the router decides it must be a job for the AI.
+It removes the trigger word *friday* to get the clean command: *what's the weather in ghaziabad*.
 
-## 3.Processing Layers (The Two Paths)
+It looks at your local_command_map (your *Local Brain*).
 
-Based on the router's decision, the query takes one of two completely different paths:
+It checks if the clean command starts with any of the local keywords (like *screenshot*, *youtube*, *open*, *time*, *remember that*, etc.).
 
-Path A: Local Processing Layer (Fast & Free) Execute Local Function: If a local match was found (e.g., *screenshot*), the router directly calls your handle_screenshot_local() function.
+In this case, *what's the weather...* does not match any of your local keywords. The router concludes: *This is a complex job for the AI.*
 
-Local Modules & Data: This function uses local libraries (like pyautogui) and local files (like trainer.yml or data.txt) to get the job done instantly.
+## 3. The Two Paths (Acting)
 
-This path uses 0 **API** calls.
+Because the command was not a local match, the router chooses Path B.
 
-Path B: Cloud AI Processing Layer (Smart & Quota-Based) Send to Gemini **API**: The router sends the full text query (*Friday, what's the weather in London?*) to the Google Gemini **LLM**.
+## Path A: The Local Brain (Fast & Free) (This path is **NOT** used for your weather query, but it would be for *Friday, take a screenshot*)
 
-Gemini Function Calling: The AI analyzes the sentence and figures out the user's intent. It determines, "This user wants to run the handle_weather function, and the city parameter is London."
+The router would find a match (*screenshot*).
 
-Execute AI-Mapped Function: The system then calls your handle_weather(city=*London*) function. This function might use its own external APIs (like OpenWeather) to get the data.
+It would immediately call your local Python function handle_screenshot().
 
-This path uses 1 **API** call.
+This function runs, saves the image, and returns the text: *Screenshot saved as...*.
 
-## 4.Output Layer
+No **API** quota is used.
 
-Both paths must end up at the same place to give you a response.
+## Path B: The AI Brain (Smart & Quota-Based) (This is the path your query takes)
 
-Assistant Response (Text): Both the local function (handle_screenshot_local) and the AI-mapped function (handle_weather) return a simple text string (e.g., *Screenshot saved* or *The weather in London is...*).
+Send to Cloud AI: The router sends the full, original query (*friday what's the weather in ghaziabad*) to the Google Gemini **API**. This uses 1 of your 2-per-minute **API** calls.
 
-Text-to-Speech (**TTS**): This final text response is fed into the pyttsx3 engine (speak() function).
+Gemini Function Calling: The Gemini AI analyzes the meaning of the sentence. It's smart enough to know:
 
-Audio Output: The assistant speaks the response to you.
+The user's intent is to get the weather.
 
+The function for this is handle_weather.
+
+The parameter it needs is city.
+
+The city in the query is Ghaziabad.
+
+The AI then sends a structured response back to your code that says: "Run your handle_weather function, and pass it city='Ghaziabad'."
+
+Execute AI-Mapped Function: Your code then runs handle_weather(city=*Ghaziabad*). This function might call another **API** (like OpenWeather) to get the data. It then returns the text: *The weather in Ghaziabad is...*.
+
+## 4. The Output Layer (Responding)
+
+This layer takes the text from whichever path was chosen and gives it back to you.
+
+Text Response: The system now has a final answer string (e.g., *The weather in Ghaziabad is...*).
+
+Text-to-Speech (**TTS**): This string is passed to your speak() function, which uses the pyttsx3 library.
+
+Audio Output: The pyttsx3 library turns the text into synthesized speech, and you hear the assistant's voice through your speakers.
 ---
 
 ## 🛠️ Technologies Used
